@@ -1,0 +1,384 @@
+#!/bin/bash
+
+#-------#
+# DEBUG #
+#-------#{{{
+#set -xv
+#}}}
+
+#-------------#
+# SCRIPE NAME #
+#-------------#{{{
+_name_="${0##*/}"
+#}}}
+
+#---------------#
+# XBPS LOG FILE #
+#---------------#{{{
+_XBPS_DIR_="/var/log/socklog/xbps"
+_XBPS_HISTORY_="/tmp/xbps_log"
+
+: > $_XBPS_HISTORY_
+
+while read -r L ; do
+	\cat $L >> $_XBPS_HISTORY_
+done < <(ls ${_XBPS_DIR_}/*.u &> /dev/null)
+
+\cat $_XBPS_DIR_/current 2> /dev/null >> $_XBPS_HISTORY_
+#}}}
+
+#------------------#
+# SCRIPT VARIABLES #
+#------------------#{{{
+declare -A STATE=( ["install"]="Installed" ["remove"]="Removed" ["update"]="Updated" )
+#}}}
+
+#--------------------------#
+# CHECK FOR CORRECT ACTION #
+#--------------------------#{{{
+_action_(){
+case "${_ACTION_VAR_^^}" in
+	INSTALL|REMOVE|UPDATE )
+		_ACTION_="${STATE[${_ACTION_VAR_,,}]}"
+		;;
+	* )
+		echo -e "${_name_^^} : No $1 Action Found"
+		exit 1
+		;;
+esac
+}
+#}}}
+
+#----------------#
+# CHECK FOR DATE #
+#----------------#{{{
+_date_(){
+# check for date
+test -z $_DATE_VAR_ && {
+	echo -e "${_name_^^} : Please Set Search Date First"
+	exit 1
+}
+
+if (\date -d "$_DATE_VAR_" +%Y-%m-%d\ %H:%M:%S &> /dev/null); then
+	_DATE_CHECK_=${_DATE_VAR_/ /T}
+elif (\date -d "$_DATE_VAR_" +%Y-%m-%d &> /dev/null); then
+	_DATE_CHECK_="${_DATE_VAR_}T"
+elif (\date -d "$_DATE_VAR_" +%H:%M:%S &> /dev/null); then
+	_DATE_CHECK_="T${_DATE_VAR_}"
+else
+	echo -e "${_name_^^} : $1 Date Not Correct use -h for more information"
+	exit 1
+fi
+}
+#}}}
+
+#------------------------#
+# LIST WITH OUT ARGUMENT #
+#------------------------#{{{
+_list_(){
+while read -ra L ; do
+	local PKG=${L[7]:1:-1}
+	PKG=${PKG%-*}
+	if [ "${L[6]}" = "$_ACTION_" -a "${L[8]}" = "successfully" ]; then
+		local _DATE_=${L[0]%.*}
+		_DATE_=${_DATE_/T/ }
+		[ -n "$_FULL_OPT_" ] && {
+			echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}"
+		} || {
+			echo -e "[ $_DATE_ ] ${PKG}"
+		}
+	fi
+done < $_XBPS_HISTORY_ | column -t -s ,
+
+exit
+}
+#}}}
+
+#-----------#
+# LIST ALL  #
+#-----------#{{{
+_list_all_(){
+while read -ra L ; do
+	local PKG=${L[7]:1:-1}
+	PKG=${PKG%-*}
+	if [ "${L[8]}" = "successfully" ]; then
+		local _DATE_=${L[0]%.*}
+		_DATE_=${_DATE_/T/ }
+		[ -n "$_FULL_OPT_" ] && {
+			echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[8]} , ${L[9]} ${L[10]}"
+		} || {
+			echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
+		}
+	fi
+done < $_XBPS_HISTORY_ | column -t -s ,
+
+exit
+}
+#}}}
+
+#--------------#
+# LIST AT DATE #
+#--------------#{{{
+_list_date_(){
+
+_date_
+
+while read -ra L ; do
+	local PKG=${L[7]:1:-1}
+	PKG=${PKG%-*}
+	if [[ "${L[0]}" =~ $_DATE_CHECK_ ]]; then
+		if [ "${L[6]}" = "$_ACTION_" -a "${L[8]}" = "successfully" ]; then
+			local _DATE_=${L[0]%.*}
+			_DATE_=${_DATE_/T/ }
+			[ -n "$_FULL_OPT_" ] && {
+				echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}"
+			} || {
+				echo -e "[ $_DATE_ ] ${PKG}"
+			}
+		fi
+	fi
+done < $_XBPS_HISTORY_ | column -t -s ,
+
+exit
+}
+#}}}
+
+#---------------#
+# LIST DATE ALL #
+#---------------#{{{
+_list_date_all_(){
+
+_date_
+
+while read -ra L ; do
+	local PKG=${L[7]:1:-1}
+	PKG=${PKG%-*}
+	if [[ "${L[0]}" =~ $_DATE_CHECK_ ]]; then
+		if [ "${L[8]}" = "successfully" ]; then
+			local _DATE_=${L[0]%.*}
+			_DATE_=${_DATE_/T/ }
+			[ -n "$_FULL_OPT_" ] && {
+				echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[6]} , ${L[9]} ${L[10]}"
+			} || {
+				echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
+			}
+		fi
+	fi
+done < $_XBPS_HISTORY_ | column -t -s ,
+
+exit
+
+}
+#}}}
+
+#-----------------#
+# SEACH ONLY NAME #
+#-----------------#{{{
+_search_(){
+while read -ra L ; do
+	local PKG=${L[7]:1:-1}
+	PKG=${PKG%-*}
+	if [ "${L[6]}" = "$_ACTION_" -a "${L[8]}" = "successfully" -a "$PKG" = "$_SEARCH_VAR_" ]; then
+		local _DATE_=${L[0]%.*}
+		_DATE_=${_DATE_/T/ }
+		[ -n "$_FULL_OPT_" ] && {
+			echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}"
+		} || {
+			echo -e "[ $_DATE_ ] ${PKG}"
+		}
+	fi
+done < $_XBPS_HISTORY_ | column -t -s ,
+
+exit
+}
+#}}}
+
+#------------#
+# SEARCH ALL #
+#------------#{{{
+_search_all_(){
+while read -ra L ; do
+	local PKG=${L[7]:1:-1}
+	PKG=${PKG%-*}
+	if [ "$PKG" = "$_SEARCH_VAR_" -a "${L[8]}" = "successfully" ]; then
+		local _DATE_=${L[0]%.*}
+		_DATE_=${_DATE_/T/ }
+		[ -n "$_FULL_OPT_" ] && {
+			echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[6]} , ${L[9]} ${L[10]}"
+		} || {
+			echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
+		}
+	fi
+done < $_XBPS_HISTORY_ | column -t -s ,
+
+exit
+}
+#}}}
+
+#-------------------#
+# SEARCH WITH DATE  #
+#-------------------#{{{
+_search_date_(){
+while read -ra L ; do
+	local PKG=${L[7]:1:-1}
+	PKG=${PKG%-*}
+	if [[ "${L[0]}" =~ $_DATE_CHECK_ ]]; then
+		if [ "${L[6]}" = "$_ACTION_" -a "${L[8]}" = "successfully" -a "$PKG" = "$_SEARCH_VAR_" ]; then
+			local _DATE_=${L[0]%.*}
+			_DATE_=${_DATE_/T/ }
+			[ -n "$_FULL_OPT_" ] && {
+				echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}"
+			} || {
+				echo -e "[ $_DATE_ ] ${PKG}"
+			}
+		fi
+	fi
+done < $_XBPS_HISTORY_ | column -t -s ,
+
+exit
+}
+#}}}
+
+#-----------------------#
+# SEARCH ALL WITH DATE  #
+#-----------------------#{{{
+_search_date_all_(){
+while read -ra L ; do
+	local PKG=${L[7]:1:-1}
+	PKG=${PKG%-*}
+	if [[ "${L[0]}" =~ $_DATE_CHECK_ ]]; then
+		if [ "$PKG" = "$_SEARCH_VAR_" -a "${L[8]}" = "successfully" ]; then
+			local _DATE_=${L[0]%.*}
+			_DATE_=${_DATE_/T/ }
+			[ -n "$_FULL_OPT_" ] && {
+				echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[6]} , ${L[9]} ${L[10]}"
+			} || {
+				echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
+			}
+		fi
+	fi
+done < $_XBPS_HISTORY_ | column -t -s ,
+
+exit
+}
+#}}}
+
+#-------------#
+# HELP DIALOG #
+#-------------#{{{
+_help_(){
+echo -e "
+${_name_^^}
+Write by Zakaria Gatter (zakaria.gatter@gmail.com)
+
+Command Line Xbps Log Viewer
+
+${_name_} [OPTS]
+
+OPTS :
+    -a|--action : What [ACTIONS] you looking for
+    -d|--date   : Set date and time to search
+    -l|--list   : List all packages
+    -s|--search : Search for speacial Package
+    -f|--full   : Show full View
+    -h|--help   : Show this help dialog
+
+ACTIONS :
+    install : any use of xbps-install
+    remove  : any use of xbps-remove
+    update  : any use of xbps-install -Su
+
+NOTE :
+    - the search start from the day you install socklog-void and enable (socklog-unix nanoklogd) add $USER to socklog GROUND
+    - Valide date and time : YYYY-MM-DD HH:MM:SS
+"
+}
+#}}}
+
+#---------------#
+# MAIN FUNCTION #
+#---------------#{{{
+_main_(){
+while [ $1 ]; do
+	case "$1" in
+		-a|--action )
+			shift
+			_ACTION_OPT_="true"
+			_ACTION_VAR_="$1"
+			;;
+		-d|--date )
+			shift
+			_DATE_OPT_="true"
+			_DATE_VAR_="$1"
+			;;
+		-l|--list )
+			_LIST_OPT_="true"
+			;;
+		-s|--search )
+			shift
+			_SEARCH_OPT_="true"
+			_SEARCH_VAR_="$1"
+			;;
+		-f|--full )
+			_FULL_OPT_="true"
+			;;
+		-h|--help )
+			_help_
+			;;
+		* )
+			echo -e "${_name_^^} : $1 Invalid Option, please see help for more information"
+			exit 1
+			;;
+	esac
+	shift
+done
+}
+#}}}
+
+#-------------------#
+# RUN MAIN FUNCTION #
+#-------------------#{{{
+_main_ "$@"
+#}}}
+
+#-----------------------#
+# CHECK AND RUN OPTIONS #
+#-----------------------#{{{
+# show error if pick list and search in the same command
+[ -n "$_LIST_OPT_" -a -n "$_SEARCH_OPT_" ] && {
+	echo -e "${_name_^^} : Not Allow 2 Search Options "
+	exit 1
+}
+
+# check for action option
+[ -n "$_ACTION_OPT_" ] && _action_
+
+# if date and list options set
+[ -n "$_DATE_OPT_" ] && {
+	# if set a action list the action a date
+	[ -n "$_ACTION_OPT_" -a -n "$_LIST_OPT_" ] && _list_date_
+	# if give no action list all actions at date
+	[ -z "$_ACTION_OPT_" -a -n "$_LIST_OPT_" ] && _list_date_all_
+}
+
+# if you pick a date
+[ -n "$_DATE_OPT_" ] && {
+	# search for a pkg in a date with a action
+	[ -n "$_ACTION_OPT_" -a -n "$_SEARCH_OPT_" ] && _search_date_
+	# search for a pkg in a dare with all action
+	[ -z "$_ACTION_OPT_" -a -n "$_SEARCH_OPT_" ] && _search_date_all_
+}
+
+# if pick list option
+[ -n "$_LIST_OPT_" ] && {
+	# lits options with action
+	[ -z "$_ACTION_OPT_" ] && _list_all_ || _list_
+}
+
+# if you pick search option
+[ -n "$_SEARCH_OPT_" ] && {
+	# search for pkg with that action
+	[ -z "$_ACTION_OPT_" ] && _search_all_ || _search_
+}
+#}}}
+
