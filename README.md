@@ -71,21 +71,27 @@ NOTE
 ## Examples
 
 * Show everything in the log
+
     `xbps-hist -l`
 
 * Show everything with a action
+
     `xbps-hist -a install -l`
 
 * Show eberything with a action and a date
+
     `xbps-hist -a install -d "2019-10-21 13:38:00" -l`
 
 * Search for package
+
     `xbps-hist -s socklog-void`
 
 * Search for package with action
+
     `xbps-hist -a install -s socklog-void`
 
 * Search for package with action and date
+
     `xbps-hist -a install -d "2019-10-21 13:38:00" -s socklog-void`
 
 ## TODO
