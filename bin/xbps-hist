@@ -14,8 +14,9 @@ _name_="${0##*/}"
 
 #-----------#
 # ERROR MSG #
-#-----------#
+#-----------#{{{
 _em_(){ (&>2 echo -e "${_name_^}: $@") && exit 1 ;}
+#}}}
 
 #---------------#
 # XBPS LOG FILE #
@@ -27,7 +28,7 @@ _XBPS_HISTORY_="/tmp/xbps_log"
 
 while read -r L ; do
 	\cat $L >> $_XBPS_HISTORY_
-done < <(ls ${_XBPS_DIR_}/*.u &> /dev/null)
+done < <(\ls  -1 ${_XBPS_DIR_}/*.u 2> /dev/null)
 
 \cat $_XBPS_DIR_/current 2> /dev/null >> $_XBPS_HISTORY_
 #}}}
@@ -84,7 +85,7 @@ while read -ra L ; do
 		_DATE_=${_DATE_/T/ }
 		[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG}"
 	fi
-done < $_XBPS_HISTORY_ | \column -t -s ,
+done < $_XBPS_HISTORY_ | \column -t -s ","
 
 exit
 }
@@ -102,7 +103,7 @@ while read -ra L ; do
 		_DATE_=${_DATE_/T/ }
 		[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[8]} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
 	fi
-done < $_XBPS_HISTORY_ | \column -t -s ,
+done < $_XBPS_HISTORY_ | \column -t -s ","
 
 exit
 }
@@ -125,7 +126,7 @@ while read -ra L ; do
 			[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG}"
 		fi
 	fi
-done < $_XBPS_HISTORY_ | \column -t -s ,
+done < $_XBPS_HISTORY_ | \column -t -s ","
 
 exit
 }
@@ -148,7 +149,7 @@ while read -ra L ; do
 			[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[6]} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
 		fi
 	fi
-done < $_XBPS_HISTORY_ | \column -t -s ,
+done < $_XBPS_HISTORY_ | \column -t -s ","
 
 exit
 
@@ -167,7 +168,7 @@ while read -ra L ; do
 		_DATE_=${_DATE_/T/ }
 		[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG}"
 	fi
-done < $_XBPS_HISTORY_ | \column -t -s ,
+done < $_XBPS_HISTORY_ | \column -t -s ","
 
 exit
 }
@@ -185,7 +186,7 @@ while read -ra L ; do
 		_DATE_=${_DATE_/T/ }
 		[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[6]} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
 	fi
-done < $_XBPS_HISTORY_ | \column -t -s ,
+done < $_XBPS_HISTORY_ | \column -t -s ","
 
 exit
 }
@@ -205,7 +206,7 @@ while read -ra L ; do
 			[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG}"
 		fi
 	fi
-done < $_XBPS_HISTORY_ | \column -t -s ,
+done < $_XBPS_HISTORY_ | \column -t -s ","
 
 exit
 }
@@ -225,7 +226,7 @@ while read -ra L ; do
 			[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[6]} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
 		fi
 	fi
-done < $_XBPS_HISTORY_ | \column -t -s ,
+done < $_XBPS_HISTORY_ | \column -t -s ","
 
 exit
 }
@@ -236,26 +237,24 @@ exit
 #-------------#{{{
 _help_(){
 \cat <<- HELP
-${_name_^^} Command Line Xbps Log Viewer
+Usage: ${_name_} [OPTIONS] [PKGNAME...]
 
-${_name_} [OPTS]
+OPTIONS
+ -a --action <act>  What [ACTIONS] you looking for
+ -d --date <date>   Set date and time to search
+ -l --list          List all packages
+ -s --search <pkg>  Search for speacial Package
+ -f --full          Show full View
+ -h --help          Show this help dialog
 
-OPTS :
-    -a|--action : What [ACTIONS] you looking for
-    -d|--date   : Set date and time to search
-    -l|--list   : List all packages
-    -s|--search : Search for speacial Package
-    -f|--full   : Show full View
-    -h|--help   : Show this help dialog
+ACTIONS
+ install         any use of xbps-install
+ remove          any use of xbps-remove
+ update          any use of xbps-install -Su
 
-ACTIONS :
-    install : any use of xbps-install
-    remove  : any use of xbps-remove
-    update  : any use of xbps-install -Su
-
-NOTE :
-    - the search start from the day you install socklog-void and enable (socklog-unix nanoklogd) add $USER to socklog GROUND
-    - Valide date and time : YYYY-MM-DD HH:MM:SS
+NOTE
+ the search start from the day you install socklog-void and enable (socklog-unix nanoklogd) add \$USER to socklog GROUND
+ Valide date and time : YYYY-MM-DD HH:MM:SS
 HELP
 }
 #}}}
@@ -310,7 +309,7 @@ _main_ "$@"
 #-----------------------#{{{
 # show error if pick list and search in the same command
 [ -n "$_LIST_OPT_" -a -n "$_SEARCH_OPT_" ] && {
-	_em_ "Not Allow 2 Search Options "
+	_em_ "Not Allow for 2 Search Options "
 }
 
 # check for action option
