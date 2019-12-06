@@ -78,7 +78,7 @@ NOTE
 
     `xbps-hist -a install -l`
 
-* Show eberything with a action and a date
+* Show everything with a action and a date
 
     `xbps-hist -a install -d "2019-10-21 13:38:00" -l`
 

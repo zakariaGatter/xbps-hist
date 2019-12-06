@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #-------#
 # DEBUG #
@@ -27,10 +27,10 @@ _XBPS_HISTORY_="/tmp/xbps_log"
 : > $_XBPS_HISTORY_
 
 while read -r L ; do
-	\cat $L >> $_XBPS_HISTORY_
-done < <(\ls  -1 ${_XBPS_DIR_}/*.u 2> /dev/null)
+	cat $L >> $_XBPS_HISTORY_
+done < <(ls  -1 ${_XBPS_DIR_}/*.u 2> /dev/null)
 
-\cat $_XBPS_DIR_/current 2> /dev/null >> $_XBPS_HISTORY_
+cat $_XBPS_DIR_/current 2> /dev/null >> $_XBPS_HISTORY_
 #}}}
 
 #------------------#
@@ -61,11 +61,11 @@ _date_(){
 # check for date
 [ "$_DATE_VAR_" ] || _em_ "Please Set Search Date First"
 
-if (\date -d "$_DATE_VAR_" +%Y-%m-%d\ %H:%M:%S &> /dev/null); then
+if (date -d "$_DATE_VAR_" +%Y-%m-%d\ %H:%M:%S &> /dev/null); then
 	_DATE_CHECK_=${_DATE_VAR_/ /T}
-elif (\date -d "$_DATE_VAR_" +%Y-%m-%d &> /dev/null); then
+elif (date -d "$_DATE_VAR_" +%Y-%m-%d &> /dev/null); then
 	_DATE_CHECK_="${_DATE_VAR_}T"
-elif (\date -d "$_DATE_VAR_" +%H:%M:%S &> /dev/null); then
+elif (date -d "$_DATE_VAR_" +%H:%M:%S &> /dev/null); then
 	_DATE_CHECK_="T${_DATE_VAR_}"
 else
 	_em_ "$1 Date Not Correct use -h for more information"
@@ -85,7 +85,7 @@ while read -ra L ; do
 		_DATE_=${_DATE_/T/ }
 		[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG}"
 	fi
-done < $_XBPS_HISTORY_ | \column -t -s ","
+done < $_XBPS_HISTORY_ | column -t -s ","
 
 exit
 }
@@ -103,7 +103,7 @@ while read -ra L ; do
 		_DATE_=${_DATE_/T/ }
 		[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[8]} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
 	fi
-done < $_XBPS_HISTORY_ | \column -t -s ","
+done < $_XBPS_HISTORY_ | column -t -s ","
 
 exit
 }
@@ -126,7 +126,7 @@ while read -ra L ; do
 			[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG}"
 		fi
 	fi
-done < $_XBPS_HISTORY_ | \column -t -s ","
+done < $_XBPS_HISTORY_ | column -t -s ","
 
 exit
 }
@@ -149,7 +149,7 @@ while read -ra L ; do
 			[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[6]} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
 		fi
 	fi
-done < $_XBPS_HISTORY_ | \column -t -s ","
+done < $_XBPS_HISTORY_ | column -t -s ","
 
 exit
 
@@ -168,7 +168,7 @@ while read -ra L ; do
 		_DATE_=${_DATE_/T/ }
 		[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG}"
 	fi
-done < $_XBPS_HISTORY_ | \column -t -s ","
+done < $_XBPS_HISTORY_ | column -t -s ","
 
 exit
 }
@@ -186,7 +186,7 @@ while read -ra L ; do
 		_DATE_=${_DATE_/T/ }
 		[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[6]} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
 	fi
-done < $_XBPS_HISTORY_ | \column -t -s ","
+done < $_XBPS_HISTORY_ | column -t -s ","
 
 exit
 }
@@ -206,7 +206,7 @@ while read -ra L ; do
 			[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG}"
 		fi
 	fi
-done < $_XBPS_HISTORY_ | \column -t -s ","
+done < $_XBPS_HISTORY_ | column -t -s ","
 
 exit
 }
@@ -226,7 +226,7 @@ while read -ra L ; do
 			[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[6]} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
 		fi
 	fi
-done < $_XBPS_HISTORY_ | \column -t -s ","
+done < $_XBPS_HISTORY_ | column -t -s ","
 
 exit
 }
@@ -236,7 +236,7 @@ exit
 # HELP DIALOG #
 #-------------#{{{
 _help_(){
-\cat <<- HELP
+cat <<- HELP
 Usage: ${_name_} [OPTIONS] [PKGNAME...]
 
 OPTIONS
