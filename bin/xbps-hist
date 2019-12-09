@@ -3,7 +3,7 @@
 #-------#
 # DEBUG #
 #-------#{{{
-#set -xv
+#set -x
 #}}}
 
 #-------------#
@@ -15,7 +15,7 @@ _name_="${0##*/}"
 #-----------#
 # ERROR MSG #
 #-----------#{{{
-_em_(){ (&>2 echo -e "${_name_^}: $@") && exit 1 ;}
+_em_(){ (&>2 printf "%s: %s \n" "${_name_^}" "$@") && exit 1 ;}
 #}}}
 
 #---------------#
@@ -43,12 +43,12 @@ declare -A STATE=( ["install"]="Installed" ["remove"]="Removed" ["update"]="Upda
 # CHECK FOR CORRECT ACTION #
 #--------------------------#{{{
 _action_(){
-case "${_ACTION_VAR_^^}" in
+case "${_ACTION_^^}" in
 	INSTALL|REMOVE|UPDATE )
-		_ACTION_="${STATE[${_ACTION_VAR_,,}]}"
+		_ACTION_="${STATE[${_ACTION_,,}]}"
 		;;
 	* )
-		_em_ "No $1 Action Found"
+		_em_ "Invalid action '$1'\nTry: '$_name_ -h' for more information"
 		;;
 esac
 }
@@ -58,17 +58,14 @@ esac
 # CHECK FOR DATE #
 #----------------#{{{
 _date_(){
-# check for date
-[ "$_DATE_VAR_" ] || _em_ "Please Set Search Date First"
-
-if (date -d "$_DATE_VAR_" +%Y-%m-%d\ %H:%M:%S &> /dev/null); then
-	_DATE_CHECK_=${_DATE_VAR_/ /T}
-elif (date -d "$_DATE_VAR_" +%Y-%m-%d &> /dev/null); then
-	_DATE_CHECK_="${_DATE_VAR_}T"
-elif (date -d "$_DATE_VAR_" +%H:%M:%S &> /dev/null); then
-	_DATE_CHECK_="T${_DATE_VAR_}"
+if (date -d "$_DATE_" +%Y-%m-%d\ %H:%M:%S &> /dev/null); then
+	_DATE_CHECK_=${_DATE_/ /T}
+elif (date -d "$_DATE_" +%Y-%m-%d &> /dev/null); then
+	_DATE_CHECK_="${_DATE_}T"
+elif (date -d "$_DATE_" +%H:%M:%S &> /dev/null); then
+	_DATE_CHECK_="T${_DATE_}"
 else
-	_em_ "$1 Date Not Correct use -h for more information"
+	_em_ "Invalid date '$1'\nTry: '$_name_ -h' for more information"
 fi
 }
 #}}}
@@ -83,11 +80,9 @@ while read -ra L ; do
 	if [ "${L[6]}" = "$_ACTION_" -a "${L[8]}" = "successfully" ]; then
 		local _DATE_=${L[0]%.*}
 		_DATE_=${_DATE_/T/ }
-		[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG}"
+		[ "$_FULL_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG}"
 	fi
 done < $_XBPS_HISTORY_ | column -t -s ","
-
-exit
 }
 #}}}
 
@@ -101,11 +96,9 @@ while read -ra L ; do
 	if [ "${L[8]}" = "successfully" ]; then
 		local _DATE_=${L[0]%.*}
 		_DATE_=${_DATE_/T/ }
-		[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[8]} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
+		[ "$_FULL_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[8]} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
 	fi
 done < $_XBPS_HISTORY_ | column -t -s ","
-
-exit
 }
 #}}}
 
@@ -113,9 +106,6 @@ exit
 # LIST AT DATE #
 #--------------#{{{
 _list_date_(){
-
-_date_
-
 while read -ra L ; do
 	local PKG=${L[7]:1:-1}
 	PKG=${PKG%-*}
@@ -123,12 +113,10 @@ while read -ra L ; do
 		if [ "${L[6]}" = "$_ACTION_" -a "${L[8]}" = "successfully" ]; then
 			local _DATE_=${L[0]%.*}
 			_DATE_=${_DATE_/T/ }
-			[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG}"
+			[ "$_FULL_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG}"
 		fi
 	fi
 done < $_XBPS_HISTORY_ | column -t -s ","
-
-exit
 }
 #}}}
 
@@ -136,9 +124,6 @@ exit
 # LIST DATE ALL #
 #---------------#{{{
 _list_date_all_(){
-
-_date_
-
 while read -ra L ; do
 	local PKG=${L[7]:1:-1}
 	PKG=${PKG%-*}
@@ -146,13 +131,10 @@ while read -ra L ; do
 		if [ "${L[8]}" = "successfully" ]; then
 			local _DATE_=${L[0]%.*}
 			_DATE_=${_DATE_/T/ }
-			[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[6]} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
+			[ "$_FULL_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[6]} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
 		fi
 	fi
 done < $_XBPS_HISTORY_ | column -t -s ","
-
-exit
-
 }
 #}}}
 
@@ -166,11 +148,9 @@ while read -ra L ; do
 	if [ "${L[6]}" = "$_ACTION_" -a "${L[8]}" = "successfully" -a "$PKG" = "$_SEARCH_VAR_" ]; then
 		local _DATE_=${L[0]%.*}
 		_DATE_=${_DATE_/T/ }
-		[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG}"
+		[ "$_FULL_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG}"
 	fi
 done < $_XBPS_HISTORY_ | column -t -s ","
-
-exit
 }
 #}}}
 
@@ -184,11 +164,9 @@ while read -ra L ; do
 	if [ "$PKG" = "$_SEARCH_VAR_" -a "${L[8]}" = "successfully" ]; then
 		local _DATE_=${L[0]%.*}
 		_DATE_=${_DATE_/T/ }
-		[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[6]} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
+		[ "$_FULL_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[6]} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
 	fi
 done < $_XBPS_HISTORY_ | column -t -s ","
-
-exit
 }
 #}}}
 
@@ -203,12 +181,10 @@ while read -ra L ; do
 		if [ "${L[6]}" = "$_ACTION_" -a "${L[8]}" = "successfully" -a "$PKG" = "$_SEARCH_VAR_" ]; then
 			local _DATE_=${L[0]%.*}
 			_DATE_=${_DATE_/T/ }
-			[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG}"
+			[ "$_FULL_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG}"
 		fi
 	fi
 done < $_XBPS_HISTORY_ | column -t -s ","
-
-exit
 }
 #}}}
 
@@ -223,12 +199,10 @@ while read -ra L ; do
 		if [ "$PKG" = "$_SEARCH_VAR_" -a "${L[8]}" = "successfully" ]; then
 			local _DATE_=${L[0]%.*}
 			_DATE_=${_DATE_/T/ }
-			[ "$_FULL_OPT_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[6]} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
+			[ "$_FULL_" ] && echo -e "[ $_DATE_ ] ${L[7]:1:-1} , ${L[6]} , ${L[9]} ${L[10]}" || echo -e "[ $_DATE_ ] ${PKG} , ${L[6]}"
 		fi
 	fi
 done < $_XBPS_HISTORY_ | column -t -s ","
-
-exit
 }
 #}}}
 
@@ -240,12 +214,12 @@ cat <<- HELP
 Usage: ${_name_} [OPTIONS] [PKGNAME...]
 
 OPTIONS
- -a --action <act>  What [ACTIONS] you looking for
- -d --date <date>   Set date and time to search
- -l --list          List all packages
- -s --search <pkg>  Search for speacial Package
- -f --full          Show full View
- -h --help          Show this help dialog
+ -a <ACTION>    What [ACTIONS] you looking for
+ -d <DATE>      Set date and time to search
+ -l             List all packages
+ -s <PKG>       Search for speacial Package
+ -f             Show full View
+ -h             Show this help dialog
 
 ACTIONS
  install         any use of xbps-install
@@ -263,38 +237,32 @@ HELP
 # MAIN FUNCTION #
 #---------------#{{{
 _main_(){
-while [ $1 ]; do
-	case "$1" in
-		-a|--action )
-			shift
-			_ACTION_OPT_=true
-			_ACTION_VAR_="$1"
+while getopts ":a:d:s:lfh" OPT; do
+    case "$OPT" in
+        a )
+            _ACTION_="$OPTARG"
+            ;;
+        d )
+            _DATE_="$OPTARG"
+            ;;
+        s )
+            _SEARCH_="$OPTARG"
+            ;;
+        l )
+            _LIST_=true
+            ;;
+        f )
+            _FULL_=true
+            ;;
+        : )
+            _em_ "Option '-$OPTARG' Requires an argument\nTry: '$_name_ -h' for more information"
+            ;;
+		* ) # wrong option
+			_em_ "Invalid option -'$OPTARG'\nTry: '$_name_ -h' for more information"
 			;;
-		-d|--date )
-			shift
-			_DATE_OPT_=true
-			_DATE_VAR_="$1"
-			;;
-		-l|--list )
-			_LIST_OPT_=true
-			;;
-		-s|--search )
-			shift
-			_SEARCH_OPT_=true
-			_SEARCH_VAR_="$1"
-			;;
-		-f|--full )
-			_FULL_OPT_=true
-			;;
-		-h|--help )
-			_help_
-			;;
-		* )
-			_em_ "$1 Invalid Option, please see help for more information"
-			;;
-	esac
-	shift
+    esac
 done
+shift "$((OPTIND-1))"
 }
 #}}}
 
@@ -307,40 +275,14 @@ _main_ "$@"
 #-----------------------#
 # CHECK AND RUN OPTIONS #
 #-----------------------#{{{
-# show error if pick list and search in the same command
-[ -n "$_LIST_OPT_" -a -n "$_SEARCH_OPT_" ] && {
-	_em_ "Not Allow for 2 Search Options "
-}
-
-# check for action option
-[ "$_ACTION_OPT_" ] && _action_
-
-# if date and list options set
-[ "$_DATE_OPT_" ] && {
-	# if set a action list the action a date
-	[ -n "$_ACTION_OPT_" -a -n "$_LIST_OPT_" ] && _list_date_
-	# if give no action list all actions at date
-	[ -z "$_ACTION_OPT_" -a -n "$_LIST_OPT_" ] && _list_date_all_
-}
-
-# if you pick a date
-[ "$_DATE_OPT_" ] && {
-	# search for a pkg in a date with a action
-	[ -n "$_ACTION_OPT_" -a -n "$_SEARCH_OPT_" ] && _search_date_
-	# search for a pkg in a dare with all action
-	[ -z "$_ACTION_OPT_" -a -n "$_SEARCH_OPT_" ] && _search_date_all_
-}
-
-# if pick list option
-[ "$_LIST_OPT_" ] && {
-	# lits options with action
-	[ "$_ACTION_OPT_" ] || _list_all_ && _list_
-}
-
-# if you pick search option
-[ "$_SEARCH_OPT_" ] && {
-	# search for pkg with that action
-	[ "$_ACTION_OPT_" ] || _search_all_ && _search_
-}
+[ "$_LIST_" && "$_SEARCH_" ] && _em_ "only one operation may be used at a time"
+[ "$_ACTION_" ] && _action_
+[ "$_DATE_" ]   && _date_
+[ "$_LIST_"     && "$_ACTION_" ] && _list_ || _list_all_
+[ "$_SEARCH_"   && "$_ACTION_" ] && _search_ || _search_all_
+[ "$_DATE_"     && "$_ACTION_"   && "$_LIST_" ]     && _list_date_
+[ "$_DATE_"     && ! "$_ACTION_" && "$_LIST_" ]     && _list_date_all_
+[ "$_DATE_"     && "$_ACTION_"   && "$_SEARCH_" ]   && _search_date_
+[ "$_DATE_"     && ! "$_ACTION_" && "$_SEARCH_" ]   && _search_date_all_
 #}}}
 
