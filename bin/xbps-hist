@@ -230,6 +230,7 @@ NOTE
  the search start from the day you install socklog-void and enable (socklog-unix nanoklogd) add \$USER to socklog GROUND
  Valide date and time : YYYY-MM-DD HH:MM:SS
 HELP
+exit 0
 }
 #}}}
 
@@ -254,6 +255,9 @@ while getopts ":a:d:s:lfh" OPT; do
         f )
             _FULL_=true
             ;;
+        h )
+            _HELP_=true
+            ;;
         : )
             _em_ "Option '-$OPTARG' Requires an argument\nTry: '$_name_ -h' for more information"
             ;;
@@ -275,14 +279,15 @@ _main_ "$@"
 #-----------------------#
 # CHECK AND RUN OPTIONS #
 #-----------------------#{{{
-[ "$_LIST_" && "$_SEARCH_" ] && _em_ "only one operation may be used at a time"
+[ "$_LIST_" ] && [ "$_SEARCH_" ] && _em_ "only one operation may be used at a time"
+[ "$_HELP_" ] && _help_
 [ "$_ACTION_" ] && _action_
-[ "$_DATE_" ]   && _date_
-[ "$_LIST_"     && "$_ACTION_" ] && _list_ || _list_all_
-[ "$_SEARCH_"   && "$_ACTION_" ] && _search_ || _search_all_
-[ "$_DATE_"     && "$_ACTION_"   && "$_LIST_" ]     && _list_date_
-[ "$_DATE_"     && ! "$_ACTION_" && "$_LIST_" ]     && _list_date_all_
-[ "$_DATE_"     && "$_ACTION_"   && "$_SEARCH_" ]   && _search_date_
-[ "$_DATE_"     && ! "$_ACTION_" && "$_SEARCH_" ]   && _search_date_all_
+[ "$_DATE_" ] && _date_
+[ "$_LIST_" ] && [ "$_ACTION_" ] && _list_ || _list_all_
+[ "$_SEARCH_" ] && [ "$_ACTION_" ] && _search_ || _search_all_
+[ "$_DATE_" ] && [ "$_ACTION_" ] && [ "$_LIST_" ] && _list_date_
+[ "$_DATE_" ] && [ ! "$_ACTION_" ] && [ "$_LIST_" ] && _list_date_all_
+[ "$_DATE_" ] && [ "$_ACTION_" ] && [ "$_SEARCH_" ] && _search_date_
+[ "$_DATE_" ] && [ ! "$_ACTION_" ] && [ "$_SEARCH_" ] && _search_date_all_
 #}}}
 
