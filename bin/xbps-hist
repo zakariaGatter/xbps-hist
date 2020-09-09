@@ -3,13 +3,12 @@
 #-------------#
 # SCRIPT NAME #
 #-------------#
-_name_="${0##*/}"
-_version_="0.3"
+name="${0##*/}"
 
 #-----------#
 # ERROR MSG #
 #-----------#{{{
-_em_(){ (&>2 printf "%s: %s \n" "${_name_^}" "$@") && exit 1 ;}
+die(){ (&>2 printf "%s: %b \n" "${name^}" "$@") && exit 1 ;}
 #}}}
 
 #---------------#
@@ -44,7 +43,7 @@ case "${a^^}" in
         action=${STATE[${a,,}]}
         ;;
     * )
-		_em_ "Invalid action '$1'. Try: '$_name_ -h' for more information"
+		die "Invalid action '$1'. \nTry: '$name -h' for more information"
         ;;
 esac
 }
@@ -55,7 +54,7 @@ esac
 _date_(){
 local d="$_DATE_"
 
-(date -d "$d" +%Y-%m-%d\ %H:%M:%S &> /dev/null) && date=${d/ /T} || _em_ "Invalid date '$1'. Try: '$_name_ -h' for more information"
+(date -d "$d" +%Y-%m-%d\ %H:%M:%S &> /dev/null) && date=${d/ /T} || die "Invalid date '$1'. \nTry: '$name -h' for more information"
 }
 
 #--------#
@@ -115,8 +114,10 @@ done < $_XBPS_HISTORY_ | column -t -s ","
 # HELP DIALOG #
 #-------------#
 _help_(){
-cat <<- HELP
-Usage: ${_name_} [OPTIONS] [PKGNAME...]
+while read ; do
+    printf "%s \n" "$REPLY"
+done <<- HELP
+Usage: ${name} [OPTIONS] [PKGNAME...]
 
 OPTIONS
  -a <ACTION>    What [ACTIONS] you looking for
@@ -131,7 +132,7 @@ ACTIONS
  update          any use of xbps-install -Su
 
 NOTE
- the search start from the day you install socklog-void and enable (socklog-unix nanoklogd) add \$USER to socklog GROUND
+ the search start from the day you install (socklog-void) and enable (socklog-unix nanoklogd) add \$USER to socklog GROUND
  Valide date and time : YYYY-MM-DD HH:MM:SS
 HELP
 exit 0
@@ -151,21 +152,18 @@ while getopts ":a:d:s:lfh" OPT ; do
             ;;
         s )
             _SEARCH_="$OPTARG"
-            ((_C_++))
             ;;
         l )
             _LIST_=true
-            ((_C_++))
             ;;
         h )
             _HELP_=true
-            ((_C_++))
             ;;
         : )
-            _em_ "Option '-$OPTARG' Requires an argument. Try: '$_name_ -h' for more information"
+            die "Option '-$OPTARG' Requires an argument. \nTry: '$name -h' for more information"
             ;;
         * )
-			_em_ "Invalid option -'$OPTARG'. Try: '$_name_ -h' for more information"
+			die "Invalid option -'$OPTARG'. \nTry: '$name -h' for more information"
             ;;
     esac
 done
@@ -179,7 +177,7 @@ _main_ "$@"
 #-----------------#
 # RUN USER OPTION #
 #-----------------#
-[ "$_C_" ] && _em_ "only one operation may be used at a time"
+[ $(( ${#_SEARCH_[@]} + ${#_LIST_[@]} )) -gt 1 ] && die "only one operation may be used at a time. \nTry: '$name -h' for more information"
 [ "$_HELP_" ]   && _help_ || true
 [ "$_ACTION_" ] && _action_ || true
 [ "$_DATE_" ]   && _date_ || true
