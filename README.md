@@ -39,7 +39,7 @@
 2. Set up [Xbps-hist]:
 
 	``` bash
-	git clone https://gitlab.com/zakariaGatter/xbps-hist.git ~/brash
+	git clone https://gitlab.com/zakariaGatter/xbps-hist.git ~/xbps-hist
 	mkdir -p ~/.local/bin
 	cp ~/xbps-hist/bin/xbps-hist ~/.local/bin
 	chmod +x ~/.local/bin/xbps-hist
