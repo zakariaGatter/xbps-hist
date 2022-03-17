@@ -4,24 +4,35 @@
 # SCRIPT NAME #
 #-------------#
 name="${0##*/}"
+declare -A options
+
+#-------------------#
+# SOME BASH OPTIONS #
+#-------------------#
+shopt -u extglob nullglob
 
 #-----------#
 # ERROR MSG #
 #-----------#{{{
-die(){ (&>2 printf "%s: %b \n" "${name^}" "$@") && exit 1 ;}
+die(){ 
+    printf "%s: %b \n" "${name^}" "$@"  &>2
+    exit 2
+}
 #}}}
 
 #---------------#
 # XBPS LOG FILE #
 #---------------#{{{
-_XBPS_DIR_="/var/log/socklog/xbps"
-_XBPS_HISTORY_="/tmp/xbps_log"
+XBPS_LOG_DIR="/var/log/socklog/xbps"
+XBPS_TEMP=$(mktemp -q -t /tmp/$name.XXXXXX)
 
-: > $_XBPS_HISTORY_
+[ -f "$XBPS_TEMP" ] || touch "$XBPS_TEMP"
 
-while read -r L ; do
-	cat $L >> $_XBPS_HISTORY_
-done < <(ls  -1 $_XBPS_DIR_/{*.u,current} 2> /dev/null)
+XBPS_LOG_FILES=( $XBPS_LOG_DIR/{*.[us],current} )
+
+for log in ${XBPS_LOG_FILES[@]} ; do
+    cat "$log" >> $XBPS_TEMP
+done
 #}}}
 
 #------------------#
@@ -33,87 +44,78 @@ declare -A STATE=( ["install"]="Installed" ["remove"]="Removed" ["update"]="upda
 #---------#
 # ACTION  #
 #---------#
-_action_(){
-local a="$_ACTION_"
-
-case "${a^^}" in
-    INSTALL|\
-    REMOVE|\
-    UPDATE )
-        action=${STATE[${a,,}]}
-        ;;
-    * )
-		die "Invalid action '$1'. \nTry: '$name -h' for more information"
-        ;;
+action_func(){
+case "${ACTION^^}" in
+    INSTALL|REMOVE|UPDATE ) action=${STATE[${ACTION,,}]} ;;
+    * ) die "Invalid action '$1'. \nTry: '$name -h' for more information" ;;
 esac
 }
 
 #------#
 # DATE #
 #------#
-_date_(){
-local d="$_DATE_"
-
-(date -d "$d" +%Y-%m-%d\ %H:%M:%S &> /dev/null) && date=${d/ /T} || die "Invalid date '$1'. \nTry: '$name -h' for more information"
+date_func(){
+(date -d "$DATE" +%Y-%m-%d\ %H:%M:%S &> /dev/null) || die "Invalid date '$DATE'. \nTry: '$name -h' for more information"
 }
 
 #--------#
 # SEARCH #
 #--------#
-_search_(){
-local line
-local sr="$_SEARCH_"
+search_func(){
 while read -ra line ; do
-    local pkg=${line[7]:1:-1}
-    local _pkg=${pkg%-*}
-    local DATE="${line[0]%.*}"
-          DATE="${DATE/T/ }"
-    if [ "$action" ] && [ "$date" ] ; then
-        [ "$_pkg" = "$sr" ] && [ "$action" = "${line[6]}" ] && [[ $DATE =~ $date ]] && {
-            [ "${line[8]}" = "successfully" ] &&  printf "%s\n" "$DATE ${line[6]}, $pkg, ${line[8]}, ${line[9]} ${line[10]}"
-        }
-    elif [ "$action" ] ; then
-        [ "$_pkg" = "$sr" ] && [ "$action" = "${line[6]}" ] && {
-            [ "${line[8]}" = "successfully" ] &&  printf "%s\n" "$DATE ${line[6]}, $pkg, ${line[8]}, ${line[9]} ${line[10]}"
-        }
-    elif [ "$date" ] ; then
-        [ "$_pkg" = "$sr" ] && [[ $DATE =~ $date ]] && {
-            [ "${line[8]}" = "successfully" ] &&  printf "%s\n" "$DATE ${line[6]}, $pkg, ${line[8]}, ${line[9]} ${line[10]}"
-        }
+    pkg_name=${line[7]%-*}
+    pkg_name=${pkg_name:1}
+    date_time="${line[0]%.*}"
+    date_time="${date_time/T/ }"
+
+    if [ "${options[a]}" ] && [ "${options[d]}" ] ; then
+        if [ "$pkg_name" = "$SEARCH" ] && [ "$action" = "${line[6]}" ] && [[ $date_time =~ $DATE ]]; then
+            [ "${line[8]}" = "successfully" ] &&  printf "%s\n" "$date_time ${line[6]}, $pkg_name, ${line[8]}, ${line[9]} ${line[10]}"
+        fi
+    elif [ "${options[a]}" ] ; then
+        if [ "$pkg_name" = "$SEARCH" ] && [ "$action" = "${line[6]}" ]; then
+            [ "${line[8]}" = "successfully" ] &&  printf "%s\n" "$date_time ${line[6]}, $pkg_name, ${line[8]}, ${line[9]} ${line[10]}"
+        fi
+    elif [ "${options[d]}" ] ; then
+        if [ "$pkg_name" = "$SEARCH" ] && [[ $DATE =~ $date ]]; then
+            [ "${line[8]}" = "successfully" ] &&  printf "%s\n" "$date_time ${line[6]}, $pkg_name, ${line[8]}, ${line[9]} ${line[10]}"
+        fi
     else
-        [ "$_pkg" = "$sr" ] && [ "${line[8]}" = "successfully" ] &&  printf "%s\n" "$DATE ${line[6]}, $pkg, ${line[8]}, ${line[9]} ${line[10]}"
+        [ "$pkg_name" = "$SEARCH" ] && [ "${line[8]}" = "successfully" ] &&  printf "%s\n" "$date_time ${line[6]}, $pkg_name, ${line[8]}, ${line[9]} ${line[10]}"
     fi
-done < $_XBPS_HISTORY_ | column -t -s ","
+done < $XBPS_TEMP | column -t -s ","
+unset line pkg_name date_time
 }
 
 #------#
 # LIST #
 #------#
-_list_(){
-local line
-local sr="$_SEARCH_"
-while read -ra line ; do
-    local pkg=${line[7]:1:-1}
-    local DATE="${line[0]%.*}"
-          DATE="${DATE/T/ }"
-    if [ "$action" ] && [ "$date" ] ; then
-        [ "$action" = "${line[6]}" ] && [[ $DATE =~ $date ]] && {
-            [ "${line[8]}" = "successfully" ] &&  printf "%s\n" "$DATE ${line[6]}, $pkg, ${line[8]}, ${line[9]} ${line[10]}"
-        }
-    elif [ "$action" ] ; then
-        [ "$action" = "${line[6]}" ] && [ "${line[8]}" = "successfully" ] && printf "%s\n" "$DATE ${line[6]}, $pkg, ${line[8]}, ${line[9]} ${line[10]}"
-    elif [ "$date" ] ; then
-        [[ $DATE =~ $date ]] && [ "${line[8]}" = "successfully" ] && printf "%s\n" "$DATE ${line[6]}, $pkg, ${line[8]}, ${line[9]} ${line[10]}"
+list_func(){
+while  read -ra line ; do
+    pkg_name=${line[7]%-*}
+    pkg_name=${pkg_name:1}
+    date_time="${line[0]%.*}"
+    date_time="${date_time/T/ }"
+
+    if [ "${options[a]}" ] && [ "${options[d]}" ] ; then
+        if [ "$action" = "${line[6]}" ] && [[ $date_time =~ $DATE ]]; then
+            [ "${line[8]}" = "successfully" ] &&  printf "%s\n" "$date_time ${line[6]}, $pkg_name, ${line[8]}, ${line[9]} ${line[10]}"
+        fi
+    elif [ "${options[a]}" ] ; then
+        [ "$action" = "${line[6]}" ] && [ "${line[8]}" = "successfully" ] && printf "%s\n" "$date_time ${line[6]}, $pkg_name, ${line[8]}, ${line[9]} ${line[10]}"
+    elif [ "${options[d]}" ] ; then
+        [[ $date_time =~ $DATE ]] && [ "${line[8]}" = "successfully" ] && printf "%s\n" "$date_time ${line[6]}, $pkg_name, ${line[8]}, ${line[9]} ${line[10]}"
     else
-        [ "${line[8]}" = "successfully" ] && printf "%s\n" "$DATE ${line[6]}, $pkg, ${line[8]}, ${line[9]} ${line[10]}"
+        [ "${line[8]}" = "successfully" ] && printf "%s\n" "$date_time ${line[6]}, $pkg_name, ${line[8]}, ${line[9]} ${line[10]}"
     fi
-done < $_XBPS_HISTORY_ | column -t -s ","
+done < $XBPS_TEMP | column -t -s ","
+unset line pkg_name date_time
 }
 
 #-------------#
 # HELP DIALOG #
 #-------------#
-_help_(){
+help_func(){
 while read ; do
     printf "%s \n" "$REPLY"
 done <<- HELP
@@ -141,30 +143,19 @@ exit 0
 #---------------#
 # MAIN FUNCTION #
 #---------------#
-_main_(){
+main_func(){
 while getopts ":a:d:s:lfh" OPT ; do
     case "$OPT" in
-        a )
-            _ACTION_="$OPTARG"
-            ;;
-        d )
-            _DATE_="$OPTARG"
-            ;;
-        s )
-            _SEARCH_="$OPTARG"
-            ;;
-        l )
-            _LIST_=true
-            ;;
-        h )
-            _HELP_=true
-            ;;
-        : )
-            die "Option '-$OPTARG' Requires an argument. \nTry: '$name -h' for more information"
-            ;;
-        * )
-			die "Invalid option -'$OPTARG'. \nTry: '$name -h' for more information"
-            ;;
+        a ) options[a]=true 
+            ACTION="$OPTARG" ;;
+        d ) options[d]=true 
+            DATE="$OPTARG" ;;
+        s ) options[s]=true
+            SEARCH="$OPTARG" ;;
+        l ) options[l]=true ;;
+        h ) options[h]=true ;;
+        : ) die "Option '-$OPTARG' Requires an argument. \nTry: '$name -h' for more information" ;;
+        * ) die "Invalid option -'$OPTARG'. \nTry: '$name -h' for more information" ;;
     esac
 done
 }
@@ -172,14 +163,17 @@ done
 #--------------------#
 # RUN MAIN FUNCTION  #
 #--------------------#
-_main_ "$@"
+main_func "$@"
 
 #-----------------#
 # RUN USER OPTION #
 #-----------------#
-[ $(( ${#_SEARCH_[@]} + ${#_LIST_[@]} )) -gt 1 ] && die "only one operation may be used at a time. \nTry: '$name -h' for more information"
-[ "$_HELP_" ]   && _help_ || true
-[ "$_ACTION_" ] && _action_ || true
-[ "$_DATE_" ]   && _date_ || true
-[ "$_SEARCH_" ] && _search_ || true
-[ "$_LIST_" ]   && _list_ || true
+[ "${options[s]}" ] && [ "${options[l]}" ] && die "only one operation may be used at a time. \nTry: '$name -h' for more information"
+[ "${options[h]}" ] && help_func
+[ "${options[a]}" ] && action_func
+[ "${options[d]}" ] && date_func
+[ "${options[s]}" ] && search_func
+[ "${options[l]}" ] && list_func
+
+# remove temp file
+rm -f $XBPS_TEMP
