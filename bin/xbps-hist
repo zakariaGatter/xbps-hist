@@ -24,7 +24,7 @@ die(){
 # XBPS LOG FILE #
 #---------------#{{{
 XBPS_LOG_DIR="/var/log/socklog/xbps"
-XBPS_TEMP=$(mktemp -q -t /tmp/$name.XXXXXX)
+XBPS_TEMP=$(mktemp -qu /tmp/$name.XXX)
 
 [ -f "$XBPS_TEMP" ] || touch "$XBPS_TEMP"
 
