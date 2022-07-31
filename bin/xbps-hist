@@ -3,113 +3,125 @@
 #-------------#
 # SCRIPT NAME #
 #-------------#
-name="${0##*/}"
-declare -A options
+declare -r name=${0##*/}
+declare -r Version="0.1.0"
 
-#-------------------#
-# SOME BASH OPTIONS #
-#-------------------#
-shopt -u extglob nullglob
+#---------------------#
+# ENABLE BASH OPTIONS #
+#---------------------#
+shopt -s extglob nullglob
 
-#-----------#
-# ERROR MSG #
-#-----------#{{{
-die(){ 
-    printf "%s: %b \n" "${name^}" "$@"  &>2
+#--------------------#
+# SIMPLE EXIT DIALOG #
+#--------------------#
+die(){
+    printf "%s: %b\n" "${name^}" "$@" >&2
+    rm -f $temp
     exit 2
 }
-#}}}
 
-#---------------#
-# XBPS LOG FILE #
-#---------------#{{{
-XBPS_LOG_DIR="/var/log/socklog/xbps"
-XBPS_TEMP=$(mktemp -qu /tmp/$name.XXX)
+#-------------------------#
+# EXEC SOME VERIFICATIONS #
+#-------------------------#
+# check for packages
+command -v socklog &> /dev/null || die "Dependency 'socklog-void' not found"
 
-[ -f "$XBPS_TEMP" ] || touch "$XBPS_TEMP"
-
-XBPS_LOG_FILES=( $XBPS_LOG_DIR/{*.[us],current} )
-
-for log in ${XBPS_LOG_FILES[@]} ; do
-    cat "$log" >> $XBPS_TEMP
+# check for service enable
+for srv in socklog-unix nanoklogd; do
+    [ -e "/var/service/$srv" ] || die "Service '$srv' not enabled"
 done
-#}}}
+
+# check for user membership
+read groups < <(groups)
+[[ ${groups[@]} =~ socklog ]] || die "Add user to 'Socklog' Group Please"
+unset groups grp srv
+
+
+#-------------------#
+# GENERAL VARIABLES #
+#-------------------#
+declare -A options
+declare -l ACTION
+declare -A stat=( [install]="Installed" [update]="Updated" [remove]="Removed")
+declare -r LogDir="/var/log/socklog/xbps"
+LogFiles=( $LogDir/{*.[us],current} )
 
 #------------------#
-# SCRIPT VARIABLES #
-#------------------#{{{
-declare -A STATE=( ["install"]="Installed" ["remove"]="Removed" ["update"]="updating" )
-#}}}
+# CREATE TEMP FILE #
+#------------------#
+read temp < <(mktemp -q /tmp/$name.XXX)
 
-#---------#
-# ACTION  #
-#---------#
-action_func(){
-case "${ACTION^^}" in
-    INSTALL|REMOVE|UPDATE ) action=${STATE[${ACTION,,}]} ;;
-    * ) die "Invalid action '$1'. \nTry: '$name -h' for more information" ;;
-esac
-}
+#------------------#
+# GET ALL LOG FILE #
+#------------------#
+for log in ${LogFiles[@]}; { cat $log >> $temp ;}
 
-#------#
-# DATE #
-#------#
-date_func(){
-(date -d "$DATE" +%Y-%m-%d\ %H:%M:%S &> /dev/null) || die "Invalid date '$DATE'. \nTry: '$name -h' for more information"
-}
-
-#--------#
-# SEARCH #
-#--------#
-search_func(){
-while read -ra line ; do
-    pkg_name=${line[7]%-*}
-    pkg_name=${pkg_name:1}
-    date_time="${line[0]%.*}"
-    date_time="${date_time/T/ }"
-
-    if [ "${options[a]}" ] && [ "${options[d]}" ] ; then
-        if [ "$pkg_name" = "$SEARCH" ] && [ "$action" = "${line[6]}" ] && [[ $date_time =~ $DATE ]]; then
-            [ "${line[8]}" = "successfully" ] &&  printf "%s\n" "$date_time ${line[6]}, $pkg_name, ${line[8]}, ${line[9]} ${line[10]}"
-        fi
-    elif [ "${options[a]}" ] ; then
-        if [ "$pkg_name" = "$SEARCH" ] && [ "$action" = "${line[6]}" ]; then
-            [ "${line[8]}" = "successfully" ] &&  printf "%s\n" "$date_time ${line[6]}, $pkg_name, ${line[8]}, ${line[9]} ${line[10]}"
-        fi
-    elif [ "${options[d]}" ] ; then
-        if [ "$pkg_name" = "$SEARCH" ] && [[ $DATE =~ $date ]]; then
-            [ "${line[8]}" = "successfully" ] &&  printf "%s\n" "$date_time ${line[6]}, $pkg_name, ${line[8]}, ${line[9]} ${line[10]}"
-        fi
-    else
-        [ "$pkg_name" = "$SEARCH" ] && [ "${line[8]}" = "successfully" ] &&  printf "%s\n" "$date_time ${line[6]}, $pkg_name, ${line[8]}, ${line[9]} ${line[10]}"
-    fi
-done < $XBPS_TEMP | column -t -s ","
-unset line pkg_name date_time
-}
-
-#------#
-# LIST #
-#------#
+#--------------#
+# ALL LOG INFO #
+#--------------#
 list_func(){
-while  read -ra line ; do
-    pkg_name=${line[7]%-*}
-    pkg_name=${pkg_name:1}
-    date_time="${line[0]%.*}"
-    date_time="${date_time/T/ }"
 
-    if [ "${options[a]}" ] && [ "${options[d]}" ] ; then
-        if [ "$action" = "${line[6]}" ] && [[ $date_time =~ $DATE ]]; then
-            [ "${line[8]}" = "successfully" ] &&  printf "%s\n" "$date_time ${line[6]}, $pkg_name, ${line[8]}, ${line[9]} ${line[10]}"
-        fi
-    elif [ "${options[a]}" ] ; then
-        [ "$action" = "${line[6]}" ] && [ "${line[8]}" = "successfully" ] && printf "%s\n" "$date_time ${line[6]}, $pkg_name, ${line[8]}, ${line[9]} ${line[10]}"
-    elif [ "${options[d]}" ] ; then
-        [[ $date_time =~ $DATE ]] && [ "${line[8]}" = "successfully" ] && printf "%s\n" "$date_time ${line[6]}, $pkg_name, ${line[8]}, ${line[9]} ${line[10]}"
-    else
-        [ "${line[8]}" = "successfully" ] && printf "%s\n" "$date_time ${line[6]}, $pkg_name, ${line[8]}, ${line[9]} ${line[10]}"
+# check date
+while read -a line ; do
+    # get package name and version
+    Pkg=${line[7]:1:-1}
+    PkgName=${Pkg%-*}
+    PkgVersion=${Pkg##*-}
+
+    # get the log date
+    DateTime="${line[0]%.*}"
+    DateTime="${DateTime/T/ }"
+
+    if [ "${options[c]}" ]; then
+        declare -A color=( [Installed]="\e[32;1m" [Updated]="\e[34;1m" [Removed]="\e[31;1m")
+        underline="\e[4m"
+        bold="\e[1m"
+        off="\e[0m"
     fi
-done < $XBPS_TEMP | column -t -s ","
-unset line pkg_name date_time
+
+    # you choose '-s' option
+    if [ "${options[s]}" ]; then
+        # check if user Pkg match the log pkg
+        [ "$PKG" = "$PkgName" ] || continue
+    fi
+
+    # you choose '-d' option
+    if [ "${options[d]}" ]; then
+        # check if user insert a correct date format
+        read date < <(date -d "$DATE" +%F)
+        [ "$date" ] || die "Invalid date '$DTAE'.\ntry '$name -h' for more information"
+
+        # check if the user date match the log date
+        [[ $DateTime =~ $date ]] || continue
+    fi
+
+    # you choose '-a' option
+    if [ "${options[a]}" ]; then
+        # check if the user insert a correct action
+        [[ $ACTION =~ (install|remove|update) ]] || die "Invalide action "$ACTION".\ntry '$name -h' for more information"
+
+        # check if the action match the log
+        action="${stat[$ACTION]}"
+        [ "${line[6]}" = "$action" ] || continue
+    fi
+
+    # printf the resoult in full and short format with or without color
+    [ "${#line[6]}" -lt 9 ] && action="${line[6]}  " || action="${line[6]}"
+    if [ "${options[f]}" ]; then
+        [ "${line[8]}" = "successfully" ] && printf "%b %b - %b %b %b %b\n" \
+                                                "${underline}$DateTime${off}" \
+                                                "${color[${line[6]}]}$action${off}" \
+                                                "$PkgName" \
+                                                "${bold}'$PkgVersion'${off}" \
+                                                "${line[8]^}" \
+                                                "${line[9]}${line[10]}"
+    else
+        [ "${line[8]}" = "successfully" ] && printf "%b %b - %s\n" \
+                                                "${underline}$DateTime${off}" \
+                                                "${color[${line[6]}]}$action${off}" \
+                                                "$PkgName"
+    fi
+done < $temp
 }
 
 #-------------#
@@ -117,63 +129,67 @@ unset line pkg_name date_time
 #-------------#
 help_func(){
 while read ; do
-    printf "%s \n" "$REPLY"
-done <<- HELP
-Usage: ${name} [OPTIONS] [PKGNAME...]
+    printf "%s\n" "$REPLY"
+done <<-HELP
+${name^^}-$Version: Xbps Log Viewer in Pure Bash
+USAGE: $name [OPTIONS] ...
 
-OPTIONS
- -a <ACTION>    What [ACTIONS] you looking for
- -d <DATE>      Set date and time to search
- -s <PKG>       Search for speacial Package
- -l             List all packages
- -h             Show this help dialog
+OPTIONS:
+    -a <action> Set the <action> you looking for
+    -d <date>   Set Date to search
+    -s <pkg>    Search for special Package
+    -l          List log Info depends on '-a,-d,-s'
+    -f          Dispaly Full Log Info
+    -c          Enable Colors
+    -h          Show this helo dialog and exit
+    -v          Show Application version
 
-ACTIONS
- install         any use of xbps-install
- remove          any use of xbps-remove
- update          any use of xbps-install -Su
+NOTE:
+    the serach start from the day you:
+        Install 'socklog-void'
+        Enable 'socklog-unix,nanoklogd'
+        Add \$USER to socklog Group
 
-NOTE
- the search start from the day you install (socklog-void) and enable (socklog-unix nanoklogd) add \$USER to socklog GROUND
- Valide date and time : YYYY-MM-DD HH:MM:SS
+    <action>:
+        Xbps action like [install,remove,update]
+
+    <date>:
+        you can use simple form like 'YYYY-MM-DD'
+        or human readable for see 'man date'
 HELP
-exit 0
 }
 
 #---------------#
 # MAIN FUNCTION #
 #---------------#
 main_func(){
-while getopts ":a:d:s:lfh" OPT ; do
+while getopts ':a:d:s:lfchv' OPT; do
     case "$OPT" in
-        a ) options[a]=true 
+        a ) options[a]=true
             ACTION="$OPTARG" ;;
-        d ) options[d]=true 
+        d ) options[d]=true
             DATE="$OPTARG" ;;
         s ) options[s]=true
-            SEARCH="$OPTARG" ;;
+            PKG="$OPTARG" ;;
         l ) options[l]=true ;;
+        f ) options[f]=true ;;
+        c ) options[c]=true ;;
         h ) options[h]=true ;;
-        : ) die "Option '-$OPTARG' Requires an argument. \nTry: '$name -h' for more information" ;;
-        * ) die "Invalid option -'$OPTARG'. \nTry: '$name -h' for more information" ;;
+        v ) options[v]=true ;;
+        * ) die "Invalid option -- '$OPTARG'\nTry '$name -h' for more informations." ;;
+        : ) die "Option requires an argument -- '$APTARG'\nTry '$name -h' for more informations." ;;
     esac
 done
 }
 
-#--------------------#
-# RUN MAIN FUNCTION  #
-#--------------------#
+#-------------------#
+# RUN MAIN FUNCTION #
+#-------------------#
 main_func "$@"
 
-#-----------------#
-# RUN USER OPTION #
-#-----------------#
-[ "${options[s]}" ] && [ "${options[l]}" ] && die "only one operation may be used at a time. \nTry: '$name -h' for more information"
-[ "${options[h]}" ] && help_func
-[ "${options[a]}" ] && action_func
-[ "${options[d]}" ] && date_func
-[ "${options[s]}" ] && search_func
-[ "${options[l]}" ] && list_func
-
-# remove temp file
-rm -f $XBPS_TEMP
+#------------------#
+# RUN USER OPTIONS #
+#------------------#
+[ -z "${options[l]}" ] || list_func
+[ -z "${options[h]}" ] || help_func
+[ -z "${options[v]}" ] || printf "%s\n" "${name^} Version: $Version"
