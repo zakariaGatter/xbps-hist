@@ -1,13 +1,5 @@
 # Xbps-hist [0.1.0]
 
-## Table of Contents
-
-- [About](#about)
-- [Quick Start](#quick-start)
-- [Using Xbps-hist](#using-zshing)
-- [Examples](#examples)
-- [TODO](#todo)
-
 ## About
 
 [Xbps-hist] xbps Log Viewer
@@ -21,12 +13,6 @@
 * Search for a Package in a Date
 * Search for a Package with a Action
 * Toggle color Display
-
-[Xbps-hist] automatically...
-
-* check for correct Date or Action
-
-[Xbps-hist] is undergoing an interface change, please stay up to date to get latest changes.
 
 ## Quick Start
 
@@ -75,6 +61,12 @@ NOTE:
         you can use simple form like 'YYYY-MM-DD'
         or human readable. see 'man date'
 ```
+
+## Preview
+![Simple](./preview/simple.png)
+![Color](./preview/color.png)
+![Date](./preview/date.png)
+![Full](./preview/full.png)
 
 ## Examples
 ```bash
