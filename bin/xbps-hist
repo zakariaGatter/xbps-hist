@@ -32,7 +32,7 @@ for srv in socklog-unix nanoklogd; do
 done
 
 # check for user membership
-read groups < <(groups)
+read -a groups < <(groups)
 [[ ${groups[@]} =~ socklog ]] || die "Add user to 'Socklog' Group Please"
 unset groups grp srv
 
