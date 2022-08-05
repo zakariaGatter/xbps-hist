@@ -28,7 +28,7 @@
     cd xbps-hist
     git checkout tags/v0.1.0
 	mkdir -p ~/.local/bin
-	cp ~/xbps-hist/bin/xbps-hist ~/.local/bin
+	cp xbps-hist/bin/xbps-hist ~/.local/bin
 	chmod +x ~/.local/bin/xbps-hist
 	```
 
