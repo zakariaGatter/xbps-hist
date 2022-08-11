@@ -180,7 +180,7 @@ while getopts ':a:d:s:lfchv' OPT; do
         h ) options[h]=true ;;
         v ) options[v]=true ;;
         * ) die "Invalid option -- '$OPTARG'\nTry '$name -h' for more informations." ;;
-        : ) die "Option requires an argument -- '$APTARG'\nTry '$name -h' for more informations." ;;
+        : ) die "Option requires an argument -- '$OPTARG'\nTry '$name -h' for more informations." ;;
     esac
 done
 }
