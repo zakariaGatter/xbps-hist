@@ -26,7 +26,7 @@
 	``` bash
 	git clone https://github.com/zakariaGatter/xbps-hist.git
     cd xbps-hist
-    git checkout tags/v0.1.0
+    git checkout tags/v0.1.1
 	mkdir -p ~/.local/bin
 	cp xbps-hist/bin/xbps-hist ~/.local/bin
 	chmod +x ~/.local/bin/xbps-hist
@@ -77,6 +77,9 @@ NOTE:
     $ xbps-hist -a install -s socklog-void
     $ xbps-hist -a install -d "last month" -s socklog-void
 ```
+
+## Future Versions
+* Get information in a Interval Date (From, To)
 
 ## TODO
 [Xbps-hist] is a work in progress, so any ideas and patches are appreciated.
