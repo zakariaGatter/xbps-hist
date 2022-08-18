@@ -1,4 +1,4 @@
-# Xbps-hist [0.1.0]
+# Xbps-hist [0.1.1]
 
 ## About
 
@@ -35,7 +35,7 @@
 ## Using Xbps-hist
 
 ```
-XBPS-HIST-0.1.0: Xbps Log Viewer in Pure Bash
+XBPS-HIST-0.1.1: Xbps Log Viewer in Pure Bash
 USAGE: xbps-hist [OPTIONS] ...
 
 OPTIONS:
@@ -84,4 +84,4 @@ NOTE:
 ## TODO
 [Xbps-hist] is a work in progress, so any ideas and patches are appreciated.
 
-[Xbps-hist]:http://gitlab.com/zakariagatter/xbps-hist
+[Xbps-hist]:http://github.com/zakariagatter/xbps-hist
