@@ -61,8 +61,8 @@ for log in ${LogFiles[@]}; { cat $log >> $temp ;}
 #------------------------#
 date_check(){
     # check if user insert a correct date format
-    read date < <(date -d "$DATE" +%F)
-    [ "$date" ] || die "Invalid date '$DATE'.\ntry '$name -h' for more information"
+    read date < <(date -d "$1" +%F)
+    [ "$date" ] || die "Invalid date '$1'.\ntry '$name -h' for more information"
 }
 
 #--------------#
@@ -96,10 +96,28 @@ while read -a line ; do
 
     # you choose '-d' option
     if [ "${options[d]}" ]; then
-        date_check
+        [ "${options[S]}" ] || [ "${options[T]}" ] && die ""
+        date_check "$DATE"
         # check if the user date match the log date
         [[ $DateTime =~ $date ]] || continue
     fi
+
+    # you choose "-S" option
+    if [ "${options[S]}" ] && [ -z "$SINCE" ]; then
+        date_check "$SDATE"
+        [[ $DateTime =~ $date ]] && SINCE=true
+    fi
+
+    # start show from SINCE date
+    [ "${options[S]}" ] && [ -z "$SINCE" ] && continue
+
+    # save old date
+    old_date="$DateTime"
+
+    # is a trick to show all logs in UNTIL date
+    [ "$UNTIL" ] && {
+        [[ $old_date =~ $date ]] || break
+    }
 
     # you choose '-a' option
     if [ "${options[a]}" ]; then
@@ -127,6 +145,13 @@ while read -a line ; do
                                                 "${color[${line[6]}]}$action${off}" \
                                                 "$PkgName"
     fi
+
+    # you choose '-T' option
+    if [ "${options[T]}" ]; then
+        date_check "$TDATE"
+        [[ $DateTime =~ $date ]] && UNTIL=true
+    fi
+
 done < $temp
 }
 
@@ -187,12 +212,12 @@ while getopts ':a:d:s:lfcS:T:hv' OPT; do
         c ) options[c]=true ;;
         S ) options[S]=true
             SDATE="$OPTARG" ;;
-        T ) option[T]=true
+        T ) options[T]=true
             TDATE="$OPTARG" ;;
         h ) options[h]=true ;;
         v ) options[v]=true ;;
-        * ) die "Invalid option -- '$OPTARG'\nTry '$name -h' for more informations." ;;
         : ) die "Option requires an argument -- '$OPTARG'\nTry '$name -h' for more informations." ;;
+        * ) die "Invalid option -- '$OPTARG'\nTry '$name -h' for more informations." ;;
     esac
 done
 }
@@ -208,3 +233,6 @@ main_func "$@"
 [ -z "${options[l]}" ] || list_func
 [ -z "${options[h]}" ] || help_func
 [ -z "${options[v]}" ] || printf "%s\n" "${name^} Version: $Version"
+
+# remove temp file
+rm -f "$temp"
