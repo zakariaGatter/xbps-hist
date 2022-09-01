@@ -147,6 +147,8 @@ OPTIONS:
     -l          List log Info depends on '-a,-d,-s'
     -f          Dispaly Full Log Info
     -c          Enable Colors
+    -S <date>   Display all long SINCE a Date
+    -T <date>   Dispaly all logs UNTIL a Date
     -h          Show this helo dialog and exit
     -v          Show Application version
 
@@ -172,7 +174,7 @@ main_func(){
 # show this message when nt option giving
 [ -z "$1" ] && printf "%s: %b\n" "${name^}" "To start displaying Xbps Log please use '-l' flag" >&2
 
-while getopts ':a:d:s:lfchv' OPT; do
+while getopts ':a:d:s:lfcS:T:hv' OPT; do
     case "$OPT" in
         a ) options[a]=true
             ACTION="$OPTARG" ;;
@@ -183,6 +185,10 @@ while getopts ':a:d:s:lfchv' OPT; do
         l ) options[l]=true ;;
         f ) options[f]=true ;;
         c ) options[c]=true ;;
+        S ) options[S]=true
+            SDATE="$OPTARG" ;;
+        T ) option[T]=true
+            TDATE="$OPTARG" ;;
         h ) options[h]=true ;;
         v ) options[v]=true ;;
         * ) die "Invalid option -- '$OPTARG'\nTry '$name -h' for more informations." ;;
