@@ -56,6 +56,15 @@ read temp < <(mktemp -q /tmp/$name.XXX)
 #------------------#
 for log in ${LogFiles[@]}; { cat $log >> $temp ;}
 
+#------------------------#
+# CHECK FOR CORRECT DATE #
+#------------------------#
+date_check(){
+    # check if user insert a correct date format
+    read date < <(date -d "$DATE" +%F)
+    [ "$date" ] || die "Invalid date '$DATE'.\ntry '$name -h' for more information"
+}
+
 #--------------#
 # ALL LOG INFO #
 #--------------#
@@ -87,10 +96,7 @@ while read -a line ; do
 
     # you choose '-d' option
     if [ "${options[d]}" ]; then
-        # check if user insert a correct date format
-        read date < <(date -d "$DATE" +%F)
-        [ "$date" ] || die "Invalid date '$DTAE'.\ntry '$name -h' for more information"
-
+        date_check
         # check if the user date match the log date
         [[ $DateTime =~ $date ]] || continue
     fi
