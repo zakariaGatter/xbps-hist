@@ -89,14 +89,12 @@ while read -a line ; do
 
     # you choose '-d' option
     if [ "${options[d]}" ]; then
-        [ "${options[S]}" ] || [ "${options[T]}" ] && die ""
+        [ "${options[S]}" ] || [ "${options[T]}" ] && die "Only one date option is allowed.\nTry '$name -h' for more information."
         date_check "$DATE"
         # check if the user date match the log date
         [[ $DateTime =~ $date ]] || continue
-    fi
-
     # you choose "-S" option
-    if [ "${options[S]}" ] && [ -z "$SINCE" ]; then
+    elif [ "${options[S]}" ] && [ -z "$SINCE" ]; then
         date_check "$SDATE"
         [[ $DateTime =~ $date ]] && SINCE=true
     fi
