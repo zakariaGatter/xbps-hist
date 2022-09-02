@@ -79,14 +79,7 @@ while read -a line ; do
 
     # get the log date
     DateTime="${line[0]%.*}"
-    DateTime="${DateTime/T/ }"
-
-    if [ "${options[c]}" ]; then
-        declare -A color=( [Installed]="\e[32;1m" [Updated]="\e[34;1m" [Removed]="\e[31;1m")
-        underline="\e[4m"
-        bold="\e[1m"
-        off="\e[0m"
-    fi
+    DateTime="${DateTime%%T*}"
 
     # you choose '-s' option
     if [ "${options[s]}" ]; then
@@ -230,6 +223,12 @@ main_func "$@"
 #------------------#
 # RUN USER OPTIONS #
 #------------------#
+if [ "${options[c]}" ]; then
+    declare -A color=( [Installed]="\e[32;1m" [Updated]="\e[34;1m" [Removed]="\e[31;1m")
+    underline="\e[4m"
+    bold="\e[1m"
+    off="\e[0m"
+fi
 [ -z "${options[l]}" ] || list_func
 [ -z "${options[h]}" ] || help_func
 [ -z "${options[v]}" ] || printf "%s\n" "${name^} Version: $Version"
