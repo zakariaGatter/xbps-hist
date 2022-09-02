@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+#set -x
+
 #-------------#
 # SCRIPT NAME #
 #-------------#
@@ -61,7 +63,7 @@ for log in ${LogFiles[@]}; { cat $log >> $temp ;}
 #------------------------#
 date_check(){
     # check if user insert a correct date format
-    read date < <(date -d "$1" +%F)
+    read date < <(date -d "$1" +%F 2> /dev/null)
     [ "$date" ] || die "Invalid date '$1'.\ntry '$name -h' for more information"
 }
 
