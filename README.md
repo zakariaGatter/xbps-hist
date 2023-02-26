@@ -45,7 +45,9 @@ OPTIONS:
     -l          List log Info depends on '-a,-d,-s'
     -f          Dispaly Full Log Info
     -c          Enable Colors
-    -h          Show this helo dialog and exit
+    -S <date>   Display all long SINCE a Date
+    -T <date>   Dispaly all logs UNTIL a Date
+    -h          Show this help dialog and exit
     -v          Show Application version
 
 NOTE:
@@ -59,7 +61,7 @@ NOTE:
 
     <date>:
         you can use simple form like 'YYYY-MM-DD'
-        or human readable. see 'man date'
+        or human readable for see 'man date'
 ```
 
 ## Preview
@@ -76,10 +78,11 @@ NOTE:
     $ xbps-hist -s socklog-void
     $ xbps-hist -a install -s socklog-void
     $ xbps-hist -a install -d "last month" -s socklog-void
+    $ xbps-hist -S '2022-08-29' -T '2022-09-04'
 ```
 
 ## Future Versions
-* Get information in a Interval Date (From, To)
+[X] Get information in a Interval Date (Since, To)
 
 ## TODO
 [Xbps-hist] is a work in progress, so any ideas and patches are appreciated.

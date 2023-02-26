@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-#set -x
-
 #-------------#
 # SCRIPT NAME #
 #-------------#
@@ -101,13 +99,13 @@ while read -a line ; do
         [[ $DateTime =~ $date ]] && SINCE=true
     fi
 
-    # start show from SINCE date
+    # start show from SINCE date (-S)
     [ "${options[S]}" ] && [ -z "$SINCE" ] && continue
 
     # save old date
     old_date="$DateTime"
 
-    # is a trick to show all logs in UNTIL date
+    # is a trick to show all logs in UNTIL date (-T)
     [ "$UNTIL" ] && {
         [[ $old_date =~ $date ]] || break
     }
@@ -167,7 +165,7 @@ OPTIONS:
     -c          Enable Colors
     -S <date>   Display all long SINCE a Date
     -T <date>   Dispaly all logs UNTIL a Date
-    -h          Show this helo dialog and exit
+    -h          Show this help dialog and exit
     -v          Show Application version
 
 NOTE:
