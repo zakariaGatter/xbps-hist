@@ -26,7 +26,7 @@
 	``` bash
 	git clone https://github.com/zakariaGatter/xbps-hist.git
     cd xbps-hist
-    git checkout tags/v0.1.1
+    git checkout tags/v0.1.2
 	mkdir -p ~/.local/bin
 	cp xbps-hist/bin/xbps-hist ~/.local/bin
 	chmod +x ~/.local/bin/xbps-hist
@@ -35,7 +35,7 @@
 ## Using Xbps-hist
 
 ```
-XBPS-HIST-0.1.1: Xbps Log Viewer in Pure Bash
+XBPS-HIST-0.1.2: Xbps Log Viewer in Pure Bash
 USAGE: xbps-hist [OPTIONS] ...
 
 OPTIONS:

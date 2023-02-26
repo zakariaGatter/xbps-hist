@@ -4,7 +4,7 @@
 # SCRIPT NAME #
 #-------------#
 declare -r name=${0##*/}
-declare -r Version="0.1.1"
+declare -r Version="0.1.2"
 
 #---------------------#
 # ENABLE BASH OPTIONS #
