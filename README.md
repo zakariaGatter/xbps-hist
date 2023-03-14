@@ -1,4 +1,4 @@
-# Xbps-hist [0.1.1]
+# Xbps-hist [0.1.2]
 
 ## About
 
@@ -80,9 +80,6 @@ NOTE:
     $ xbps-hist -a install -d "last month" -s socklog-void
     $ xbps-hist -S '2022-08-29' -T '2022-09-04'
 ```
-
-## Future Versions
-[X] Get information in a Interval Date (Since, To)
 
 ## TODO
 [Xbps-hist] is a work in progress, so any ideas and patches are appreciated.
