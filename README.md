@@ -25,10 +25,10 @@
 
 	``` bash
 	git clone https://github.com/zakariaGatter/xbps-hist.git
-    cd xbps-hist
-    git checkout tags/v0.1.2
+	cd xbps-hist
+	git checkout tags/v0.1.2
 	mkdir -p ~/.local/bin
-	cp xbps-hist/bin/xbps-hist ~/.local/bin
+	cp bin/xbps-hist ~/.local/bin
 	chmod +x ~/.local/bin/xbps-hist
 	```
 
